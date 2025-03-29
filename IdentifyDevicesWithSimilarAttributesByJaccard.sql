@@ -1,5 +1,5 @@
 /*
-CoPilot: give me a SQL algorithm for finding all devices with similar attributes based on a jaccar index of .9 with grouping by similarity and all devices are only added once
+CoPilot: give me a SQL algorithm for finding all devices with similar attributes based on a jaccard index of .9 with grouping by similarity and all devices are only added once
 
 SQL algorithm to identify all devices with similar attributes based on a Jaccard Index threshold of 0.9. The algorithm ensures that each device is added to a similarity group only once.
 
@@ -121,9 +121,9 @@ FilteredResults AS (
     FROM
         JaccardIndex
     WHERE
-        JaccardIndex >= 0.9 -- Set your threshold here
+        JaccardIndex >= 1 -- Set your threshold here
 ),
-Groups AS (
+DistinctGroups AS (
     SELECT
         DeviceA,
         STRING_AGG(DeviceB, ', ') AS SimilarDevices
@@ -136,4 +136,8 @@ SELECT
     DeviceA AS GroupLeader,
     SimilarDevices
 FROM
-    Groups;
+    DistinctGroups
+WHERE
+    DeviceA NOT IN (
+        SELECT SimilarDevices FROM DistinctGroups
+    );
