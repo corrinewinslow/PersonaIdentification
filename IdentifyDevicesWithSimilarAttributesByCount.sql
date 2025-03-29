@@ -88,5 +88,5 @@ FROM
     DistinctGroups
 WHERE
     DeviceA NOT IN (
-        SELECT DeviceB FROM DistinctGroups
+        SELECT SimilarDevices FROM DistinctGroups
     );
