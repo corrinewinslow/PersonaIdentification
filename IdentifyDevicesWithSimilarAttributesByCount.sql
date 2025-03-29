@@ -1,3 +1,4 @@
+
 /*
 
 CoPilot: give me a SQL algorithm for finding all devices with similar attributes based on a count index of 3 with grouping by similarity and all devices are only added once
@@ -48,7 +49,7 @@ INSERT INTO Devices (DeviceID, Attribute) VALUES
 ('Device4', 'R00021C6'),
 ('Device4', 'R001EFE2');
 
--- Step 3: Calculate shared attributes and group devices ensuring no duplicates
+-- Step 3: Find groups of devices with shared attributes
 WITH SharedAttributes AS (
     SELECT
         d1.DeviceID AS DeviceA,
@@ -70,23 +71,35 @@ FilteredResults AS (
     FROM
         SharedAttributes
     WHERE
-        SharedAttributeCount >= 3 -- Count index threshold
+        SharedAttributeCount >= 4 -- Devices must share at least 4 attributes
 ),
 DistinctGroups AS (
-    SELECT
-        DeviceA,
-        STRING_AGG(DeviceB, ', ') AS SimilarDevices
+    SELECT DISTINCT
+        CASE
+            WHEN DeviceA < DeviceB THEN DeviceA
+            ELSE DeviceB
+        END AS GroupLeader,
+        CASE
+            WHEN DeviceA < DeviceB THEN DeviceB
+            ELSE DeviceA
+        END AS SimilarDevice
     FROM
         FilteredResults
+),
+FinalGroups AS (
+    SELECT
+        GroupLeader,
+        STRING_AGG(SimilarDevice, ', ') AS SimilarDevices
+    FROM
+        DistinctGroups
+    WHERE GroupLeader NOT IN (
+        SELECT SimilarDevice FROM DistinctGroups
+    )
     GROUP BY
-        DeviceA
+        GroupLeader
 )
 SELECT
-    DeviceA AS GroupLeader,
+    GroupLeader,
     SimilarDevices
 FROM
-    DistinctGroups
-WHERE
-    DeviceA NOT IN (
-        SELECT SimilarDevices FROM DistinctGroups
-    );
+    FinalGroups;
