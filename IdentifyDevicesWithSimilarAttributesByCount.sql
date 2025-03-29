@@ -32,21 +32,21 @@ CREATE TABLE Devices (
 
 -- Step 2: Insert example data into the table
 INSERT INTO Devices (DeviceID, Attribute) VALUES
-('Device1', 'WiFi'),
-('Device1', 'Bluetooth'),
-('Device1', 'GPS'),
-('Device2', 'Bluetooth'),
-('Device2', 'WiFi'),
-('Device2', 'GPS'),
-('Device3', 'WiFi'),
-('Device3', 'Bluetooth'),
-('Device3', 'GPS'),
-('Device4', 'WiFi'),
-('Device4', 'Bluetooth'),
-('Device4', 'NFC'),
-('Device5', 'GPS'),
-('Device5', 'Bluetooth'),
-('Device5', 'WiFi');
+('Device1', 'R00002B2'),
+('Device1', 'R0000CC2'),
+('Device1', 'R00021C6'),
+('Device1', 'R001EFE2'),
+('Device2', 'R00002B2'),
+('Device2', 'R0000CC2'),
+('Device2', 'R00021C6'),
+('Device2', 'R001EFE2'),
+('Device3', 'R00002B2'),
+('Device3', 'R0000CC2'),
+('Device3', 'R00021C6'),
+('Device4', 'R00002B2'),
+('Device4', 'R0000CC2'),
+('Device4', 'R00021C6'),
+('Device4', 'R001EFE2');
 
 -- Step 3: Calculate shared attributes and group devices ensuring no duplicates
 WITH SharedAttributes AS (
