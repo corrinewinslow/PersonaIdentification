@@ -1,5 +1,5 @@
 <#
-  CoPilot: give me an algorithm in PowerShell for finding devices with almost the same attributes using a jaccard index
+  CoPilot: give me an algorithm in PowerShell for finding pairs of devices with almost the same attributes using a jaccard index
   The Jaccard Index measures the similarity between two sets by calculating the ratio of the intersection to the union of the sets. Here's a PowerShell implementation for finding devices with "almost the same attributes" based on a Jaccard Index threshold:
   
   How It Works:
