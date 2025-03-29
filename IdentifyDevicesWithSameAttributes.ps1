@@ -1,5 +1,5 @@
 <#
-CoPilot: give me a PowerShell algorithm for finding devices with the same exact same attributes
+CoPilot: give me a PowerShell algorithm for finding devices with the exact same attributes
 
 How it Works:
 Normalization: Attributes are sorted and joined into a single string (e.g., "Bluetooth, GPS, WiFi") to ensure consistent comparison.
