@@ -1,4 +1,7 @@
-Algorithm: Match Devices with Same Attributes
+<#
+CoPilot: give me a Python algorithm for finding devices with the same exact same attributes
+
+Algorithm: Match Pairs of Devices with Same Attributes
 Input:
   A list of devices, where each device has a unique identifier and a collection of attributes.
 
@@ -28,6 +31,7 @@ Output:
 
 For the example above, the output will identify devices with matching attributes:
   [['Device1', 'Device2', 'Device4']]
+#>
 
 def find_matching_devices(devices):
     attribute_map = {}
