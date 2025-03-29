@@ -1,5 +1,5 @@
 /*
-CoPilot: give me an algorithm in SQL for finding devices with almost the same attributes using a count-based threshold
+CoPilot: give me an algorithm in SQL for finding pairs of devices with almost the same attributes using a count-based threshold
 
 Explanation:
 Self-Join (Devices d1 INNER JOIN Devices d2) Matches attributes between two different devices (d1.DeviceID and d2.DeviceID). The condition d1.DeviceID < d2.DeviceID ensures each pair is only compared once.
