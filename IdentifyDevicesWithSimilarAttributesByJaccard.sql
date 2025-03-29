@@ -51,24 +51,24 @@ CREATE TABLE Devices (
 
 -- Step 2: Insert example data into the table
 INSERT INTO Devices (DeviceID, Attribute) VALUES
-('Device1', 'WiFi'),
-('Device1', 'Bluetooth'),
-('Device1', 'GPS'),
-('Device1', 'NFC'),
-('Device2', 'WiFi'),
-('Device2', 'Bluetooth'),
-('Device2', 'GPS'),
-('Device2', 'NFC'),
-('Device3', 'WiFi'),
-('Device3', 'Bluetooth'),
-('Device3', 'GPS'),
-('Device4', 'WiFi'),
-('Device4', 'Bluetooth'),
-('Device4', 'GPS'),
-('Device4', 'NFC'),
-('Device5', 'Bluetooth'),
-('Device5', 'WiFi'),
-('Device5', 'GPS');
+('Device1', 'R00002B2'),
+('Device1', 'R0000CC2'),
+('Device1', 'R00021C6'),
+('Device1', 'R001EFE2'),
+('Device2', 'R00002B2'),
+('Device2', 'R0000CC2'),
+('Device2', 'R00021C6'),
+('Device2', 'R001EFE2'),
+('Device3', 'R00002B2'),
+('Device3', 'R0000CC2'),
+('Device3', 'R00021C6'),
+('Device4', 'R00002B2'),
+('Device4', 'R0000CC2'),
+('Device4', 'R00021C6'),
+('Device4', 'R001EFE2'),
+('Device5', 'R0000CC2'),
+('Device5', 'R00002B2'),
+('Device5', 'R00021C6');
 
 -- Step 3: Calculate Jaccard Index and group by similarity
 WITH Intersection AS (
