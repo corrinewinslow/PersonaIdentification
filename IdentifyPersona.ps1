@@ -1,3 +1,4 @@
+<#
 How it Works:
 Normalization: Attributes are sorted and joined into a single string (e.g., "Bluetooth, GPS, WiFi") to ensure consistent comparison.
 
@@ -26,6 +27,7 @@ $devices = @{
     "Device3" = @("NFC", "Bluetooth")
     "Device4" = @("WiFi", "Bluetooth", "GPS")
 }
+#>
 
 # Create an empty hashtable to map normalized attribute sets to device identifiers
 $attributeMap = @{}
