@@ -1,37 +1,27 @@
 /*
 
-CoPilot: give me a SQL algorithm for finding all devices with similar attributes based on a count index of 3 with grouping by similarity
+CoPilot: give me a SQL algorithm for finding all devices with similar attributes based on a count index of 3 with grouping by similarity and all devices are only added once
 
-Here is an SQL algorithm to find all devices with similar attributes, where devices share at least 3 attributes (count index = 3). The results will group devices by their similarity.
+Here is a SQL algorithm to find all devices with similar attributes, ensuring that each device is included only once in the final groups. The count index threshold is set to 3 shared attributes, and the devices are grouped distinctly by similarity.
 
 Explanation:
-Devices Table:
-  The Devices table stores each DeviceID and its associated Attribute.
-
-SharedAttributes CTE:
-  Performs a self-join to compare Attribute values between different devices (DeviceA and DeviceB).
-  Counts the number of shared attributes using COUNT(*).
-  The condition d1.DeviceID < d2.DeviceID ensures no duplicate or reversed comparisons.
-
-FilteredResults CTE:
-  Filters device pairs based on the count index threshold (SharedAttributeCount >= 3), retaining only pairs that share at least 3 attributes.
-
-Groups CTE:
-  Uses STRING_AGG to group all similar devices for each DeviceA (the "GroupLeader").
-
-Final Output:
-  Displays each device as a GroupLeader alongside the devices it is similar to (SimilarDevices).
+  1. Devices Table: Stores DeviceID and its associated attributes.
+  2. SharedAttributes CTE:
+    - Performs a self-join to calculate the number of shared attributes between pairs of devices.
+    - Ensures distinct pair comparisons (d1.DeviceID < d2.DeviceID) to avoid duplicates.
+  3. FilteredResults CTE: Filters the pairs that have at least 3 shared attributes using the threshold condition (SharedAttributeCount >= 3).
+  4. DistinctGroups CTE: Groups devices into similarity clusters using STRING_AGG, where each DeviceA becomes the leader of a group containing all DeviceB devices.
+  5. Final Query: Ensures that each device is listed only once by excluding any device already listed as DeviceB in a prior group (DeviceA NOT IN (SELECT DeviceB FROM DistinctGroups)).
 
 Example Output:
-  For the given dataset and a threshold of 3, the output might look like this:
-  
+  For the given dataset and a count index threshold of 3, the output might look like this:
+
   GroupLeader    SimilarDevices
   Device1        Device2, Device3
-  Device2        Device1, Device3
-  Device3        Device1, Device2
-  Device5        Device2
-  
-This algorithm efficiently groups devices sharing 3 or more attributes.
+  Device4        Device5
+
+This algorithm ensures that all devices are grouped uniquely and no device appears in more than one group.
+
 */
 
 -- Step 1: Create the Devices table
@@ -58,7 +48,7 @@ INSERT INTO Devices (DeviceID, Attribute) VALUES
 ('Device5', 'Bluetooth'),
 ('Device5', 'WiFi');
 
--- Step 3: Query to find groups of devices with at least 3 shared attributes
+-- Step 3: Calculate shared attributes and group devices ensuring no duplicates
 WITH SharedAttributes AS (
     SELECT
         d1.DeviceID AS DeviceA,
@@ -76,14 +66,13 @@ WITH SharedAttributes AS (
 FilteredResults AS (
     SELECT
         DeviceA,
-        DeviceB,
-        SharedAttributeCount
+        DeviceB
     FROM
         SharedAttributes
     WHERE
-        SharedAttributeCount >= 3 -- Set your count index threshold here
+        SharedAttributeCount >= 3 -- Count index threshold
 ),
-Groups AS (
+DistinctGroups AS (
     SELECT
         DeviceA,
         STRING_AGG(DeviceB, ', ') AS SimilarDevices
@@ -96,4 +85,8 @@ SELECT
     DeviceA AS GroupLeader,
     SimilarDevices
 FROM
-    Groups;
+    DistinctGroups
+WHERE
+    DeviceA NOT IN (
+        SELECT DeviceB FROM DistinctGroups
+    );
