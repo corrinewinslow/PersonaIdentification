@@ -1,43 +1,49 @@
 <#
 
-CoPilot: give me a PowerShell algorithm for finding a list of devices with similar attributes based on a jaccard index
+CoPilot: give me a PowerShell algorithm for finding a list of devices with similar attributes based on a jaccard index greater than or equal 0.9 with grouping by similarity and where all devices only display once
 
-PowerShell script for finding a list of devices with similar attributes based on the Jaccard Index. This script calculates the similarity between each pair of devices and groups them if the Jaccard Index meets or exceeds a specified threshold.
+PowerShell algorithm for finding devices with similar attributes based on a Jaccard index greater than or equal to 0.9. It groups devices by similarity and ensures that each device appears only once in the output.
 
-How It Works:
-Input Devices: Devices and their attributes are stored in a $devices hashtable.
+Steps:
+    1. Define a Function for Jaccard Index Calculation (Get-JaccardIndex):
+        - This function takes two sets (arrays of attributes) and calculates the Jaccard index between them.
+    2. Input Data:
+        - Devices are represented in a hashtable ($devices) where each key is a device name, and each value is an array of attributes associated with that device.
+    3. Initialize Empty Collections:
+        - $groupedDevices: Stores groups of devices with similar attributes.
+        - $processedDevices: Tracks devices that have already been assigned to a group, ensuring they don’t appear multiple times.
+    4. Iterate Over Devices to Form Groups:
+        - For each device (deviceA):
+            - Skip if it has already been processed.
+            - Initialize a group with deviceA.
+            - Compare attributes of deviceA with all other devices (deviceB).
+            - If deviceB meets the Jaccard index threshold (≥ 0.9) and is not already processed, add it to the group.
+    5. Update Processed Devices:
+        - Both deviceA and devices grouped with it (deviceB) are marked as processed to prevent duplication in other groups.
+    6. Store the Group in groupedDevices:
+        - Each device group is stored with a unique key in $groupedDevices.
+    7. Output Results:
+        - Iterate over the grouped results and print each group, ensuring each device appears only once.
 
-Jaccard Index Calculation:
-
-Intersection: Shared attributes between two devices.
-
-Union: All unique attributes of the two devices.
-
-Formula: Jaccard Index = (Size of Intersection) / (Size of Union)
-
-Threshold Setting: The $jaccardThreshold defines the minimum similarity required for devices to be grouped together.
-
-Group Devices: Devices with a Jaccard Index above the threshold are grouped in $similarDeviceGroups.
-
-Output Results: Similar device groups are displayed, listing the devices and their corresponding Jaccard Index.
-
-Example:
-For the following devices:
-
-Device1 = WiFi, Bluetooth, GPS
-Device2 = Bluetooth, WiFi, GPS
-Device3 = WiFi, Bluetooth
-Device4 = GPS, WiFi, Bluetooth, NFC
-With a threshold of 0.5, the output might look like:
-
-Groups of devices with similar attributes based on Jaccard Index:
-Device1: Device2, Device3, Device4
-Device2: Device4
-Device3: Device4
-
+Example Output for jaccard index 0.75:
+    Group1: Device3
+    Group2: Device2, Device4, Device1
+    
+    Devices in Group 2 have 3 attributes (75%) in common but Device3 has 2 attributes in common (50%) and is a separate group
 #>
 
-# Define a hashtable of devices and their attributes
+# Define a function to calculate the Jaccard index
+function Get-JaccardIndex {
+    param (
+        [array]$SetA,
+        [array]$SetB
+    )
+    $Intersection = ($SetA | Where-Object { $SetB -contains $_ }).Count
+    $Union = ($SetA + $SetB | Sort-Object -Unique).Count
+    return $Intersection / $Union
+}
+
+# Sample dataset: Device attributes as a hashtable
 $devices = @{
     "Device1" = @("WiFi", "Bluetooth", "GPS")
     "Device2" = @("Bluetooth", "WiFi", "GPS")
@@ -45,47 +51,31 @@ $devices = @{
     "Device4" = @("GPS", "WiFi", "Bluetooth", "NFC")
 }
 
-# Define the Jaccard Index threshold (e.g., 0.5 means 50% similarity)
-$jaccardThreshold = 0.5
+# Group devices based on Jaccard index >= 0.9
+$groupedDevices = @{}
+$processedDevices = @()
 
-# Create an empty hashtable to group devices based on similarity
-$similarDeviceGroups = @{}
+foreach ($deviceA in $devices.Keys) {
+    if ($processedDevices -contains $deviceA) {
+        continue
+    }
 
-# Compare each pair of devices
-$deviceKeys = $devices.Keys
-for ($i = 0; $i -lt $deviceKeys.Count; $i++) {
-    for ($j = $i + 1; $j -lt $deviceKeys.Count; $j++) {
-        $deviceA = $deviceKeys[$i]
-        $deviceB = $deviceKeys[$j]
-
-        # Get the sets of attributes for both devices
-        $attributesA = $devices[$deviceA]
-        $attributesB = $devices[$deviceB]
-
-        # Calculate intersection and union of the two sets
-        $intersection = Compare-Object -ReferenceObject $attributesA -DifferenceObject $attributesB -IncludeEqual |
-                        Where-Object { $_.SideIndicator -eq "==" } |
-                        Select-Object -ExpandProperty InputObject
-
-        $union = $attributesA + $attributesB | Sort-Object -Unique
-
-        # Calculate Jaccard Index
-        $jaccardIndex = $intersection.Count / $union.Count
-
-        # Check if the Jaccard Index meets or exceeds the threshold
-        if ($jaccardIndex -ge $jaccardThreshold) {
-            # Group devices based on similarity
-            if ($similarDeviceGroups.ContainsKey("$deviceA")) {
-                $similarDeviceGroups["$deviceA"] += "$deviceB"
-            } else {
-                $similarDeviceGroups["$deviceA"] = @("$deviceB")
+    $similarGroup = @($deviceA)
+    foreach ($deviceB in $devices.Keys) {
+        if ($deviceA -ne $deviceB -and -not ($processedDevices -contains $deviceB)) {
+            $jaccardIndex = Get-JaccardIndex -SetA $devices[$deviceA] -SetB $devices[$deviceB]
+            if ($jaccardIndex -ge 0.9) {
+                $similarGroup += $deviceB
+                $processedDevices += $deviceB
             }
         }
     }
+
+    $processedDevices += $deviceA
+    $groupedDevices[$deviceA] = $similarGroup
 }
 
-# Display the groups of similar devices
-Write-Host "Groups of devices with similar attributes based on Jaccard Index:" -ForegroundColor Green
-foreach ($group in $similarDeviceGroups.GetEnumerator()) {
-    Write-Host "$($group.Key): $($group.Value -join ', ')"
+# Output grouped devices ensuring each device is displayed only once
+foreach ($group in $groupedDevices.Values) {
+    Write-Output "Group: $($group -join ', ')"
 }
