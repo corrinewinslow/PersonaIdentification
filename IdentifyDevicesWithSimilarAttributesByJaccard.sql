@@ -1,45 +1,38 @@
 /*
-CoPilot: give me a SQL algorithm for finding all devices with similar attributes based on a jaccard index of .9 with grouping by similarity and all devices are only added once
+CoPilot: give me a SQL algorithm for finding all devices with similar attributes based on a jaccard index of 1.0 with grouping by similarity and where all devices only display once
 
-SQL algorithm to identify all devices with similar attributes based on a Jaccard Index threshold of 0.9. The algorithm ensures that each device is added to a similarity group only once.
+SQL algorithm to find all devices with similar attributes, grouped by similarity based on a Jaccard Index of 1.0 where each device appears only once in the results.
 
-How the Algorithm Works:
-  1. Intersection Calculation (Intersection CTE):
-    - This calculates the number of attributes shared between two devices.
-    - A COUNT(*) query is used to find the "intersection size," representing the total number of attributes that both devices have in common.
-    - The condition d1.DeviceID < d2.DeviceID ensures each pair is only compared once, avoiding duplicate comparisons such as (Device1, Device2) and (Device2, Device1).
-  2. Union Calculation (UnionSize CTE):
-    - This calculates the total number of unique attributes across both devices being compared.
-    - The formula for union size adds the distinct attributes from both devices and subtracts the overlapping attributes (intersection).
-    - This step ensures the uniqueness of all combined attributes in the calculation.
-  3. Jaccard Index Calculation (JaccardIndex CTE):
-    - Using the formula: $$ Jaccard\ Index = \frac{\text{IntersectionSize}}{\text{UnionSize}} $$
-    - For each pair of devices, the ratio of the intersection to the union is calculated. This value represents the similarity between the two devices.
-  4. Threshold Filtering (FilteredResults CTE):
-    - Filters out pairs of devices where the Jaccard Index is less than 0.9.
-    - This step ensures that only highly similar devices (90% similarity or more) are retained for grouping.
-  5. Distinct Grouping (DistinctGroups CTE):
-    - Groups devices together based on their similarity.
-    - Uses the STRING_AGG function to aggregate all devices similar to a given "Group Leader" (DeviceA) into a single comma-separated list.
-    - Ensures no device appears in more than one group by excluding devices already listed in other groups.
-  6. Final Query:
-    - The output displays each GroupLeader (the primary device for each group) alongside its list of similar devices.
-    - By excluding any device already grouped, this guarantees that each device is included only once.
+Explanation:
+  1. Intersection CTE:
+    - Calculates the number of shared attributes between pairs of devices (IntersectionSize).
+    - A self-join is used to compare rows within the Devices table.
+  2. UnionSize CTE:
+    - Computes the total number of unique attributes across both devices (UnionSize).
+    - Ensures uniqueness by subtracting duplicates (overlapping attributes) from the total.
+  3. JaccardIndex CTE:
+    - Calculates the Jaccard Index for each pair of devices: $$ Jaccard\ Index = \frac{\text{Intersection Size}}{\text{Union Size}} $$
+    - Filters out device pairs with a similarity below 0.9.
+  4. FilteredResults CTE:
+    - Retains only those pairs of devices that meet or exceed the Jaccard Index threshold.
+  5. DistinctGroups CTE:
+    - Groups devices uniquely by assigning a Group Leader and a corresponding SimilarDevice.
+    - This ensures that device pairs are not duplicated (e.g., (Device1, Device2) is treated the same as (Device2, Device1)).
+  6. FinalGroups CTE:
+    - Groups all devices under their respective "Group Leaders."
+    - Uses STRING_AGG to create a comma-separated list of similar devices for each group.
+    - Ensures that no device appears in multiple groups by excluding devices already listed as a "SimilarDevice."
+  7. Final Query:
+    - Outputs each GroupLeader with their list of SimilarDevices, ensuring every device is listed only once.
 
-Why It Ensures Each Device Is Only Added Once:
-  The DistinctGroups CTE ensures unique grouping by:
-    - Assigning one device (DeviceA) as the "Group Leader."
-    - Ensuring that no DeviceB already appears as a group member in another group.
-  This prevents overlapping groups and ensures that all devices are distinctly categorized.
+Example Output:
+  For the given dataset and a Jaccard Index threshold of 0.9, the output might look like this:
 
-Example:
-  For the given dataset and a Jaccard Index of 0.9, the output might look like:
-  
   GroupLeader    SimilarDevices
   Device1        Device2, Device4
-  Device5        Device3
+  Device3        Device5
 
-  This approach ensures that each device is part of exactly one group and groups are formed only if the similarity exceeds the Jaccard threshold of 0.9.
+  This ensures that each device is uniquely included in a similarity group and satisfies the Jaccard Index threshold of 1.0.
 
 */
 
@@ -70,7 +63,7 @@ INSERT INTO Devices (DeviceID, Attribute) VALUES
 ('Device5', 'R00002B2'),
 ('Device5', 'R00021C6');
 
--- Step 3: Calculate Jaccard Index and group by similarity
+-- Step 3: Calculate Jaccard Index and group devices uniquely
 WITH Intersection AS (
     SELECT
         d1.DeviceID AS DeviceA,
@@ -104,8 +97,6 @@ JaccardIndex AS (
     SELECT
         i.DeviceA,
         i.DeviceB,
-        i.IntersectionSize,
-        u.UnionSize,
         CAST(i.IntersectionSize AS FLOAT) / CAST(u.UnionSize AS FLOAT) AS JaccardIndex
     FROM
         Intersection i
@@ -121,23 +112,35 @@ FilteredResults AS (
     FROM
         JaccardIndex
     WHERE
-        JaccardIndex >= 1 -- Set your threshold here
+        JaccardIndex >= 1 -- Filter for similarity threshold of 0.9
 ),
 DistinctGroups AS (
-    SELECT
-        DeviceA,
-        STRING_AGG(DeviceB, ', ') AS SimilarDevices
+    SELECT DISTINCT
+        CASE
+            WHEN DeviceA < DeviceB THEN DeviceA
+            ELSE DeviceB
+        END AS GroupLeader,
+        CASE
+            WHEN DeviceA < DeviceB THEN DeviceB
+            ELSE DeviceA
+        END AS SimilarDevice
     FROM
         FilteredResults
+),
+FinalGroups AS (
+    SELECT
+        GroupLeader,
+        STRING_AGG(SimilarDevice, ', ') AS SimilarDevices
+    FROM
+        DistinctGroups
+    WHERE GroupLeader NOT IN (
+            SELECT SimilarDevice FROM DistinctGroups
+        )
     GROUP BY
-        DeviceA
+        GroupLeader
 )
 SELECT
-    DeviceA AS GroupLeader,
+    GroupLeader,
     SimilarDevices
 FROM
-    DistinctGroups
-WHERE
-    DeviceA NOT IN (
-        SELECT SimilarDevices FROM DistinctGroups
-    );
+    FinalGroups;
