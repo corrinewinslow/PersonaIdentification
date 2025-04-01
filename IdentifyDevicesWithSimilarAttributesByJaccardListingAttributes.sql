@@ -20,6 +20,14 @@ CoPilot: list attributes in each group
   - Grouped attributes: The shared or relevant attributes for each group.
 This ensures that devices are displayed only once, grouped logically by similarity, and accompanied by the attributes contributing to their grouping.
 
+Output:
+
+grouped_devices   grouped_attributes
+--------------------------------------------------------------------------------------------
+Device1           R00002B2,R0000CC2,R00021C6,R001EFE2
+Device1,Device2   R00002B2,R0000CC2,R00021C6,R001EFE2,R00002B2,R0000CC2,R00021C6,R001EFE2
+Device3           R00002B2,R0000CC2,R00021C6
+
 */
 -- Step 1: Create the Devices table
 CREATE TABLE device_attributes (
